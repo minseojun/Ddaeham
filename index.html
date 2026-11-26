@@ -22,20 +22,21 @@ canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor
 #over h1{margin:0 0 6px;font-size:22px}
 #over p{margin:0 0 12px;line-height:1.55;font-size:15px}
 button{font:inherit;font-size:18px;background:var(--pink);color:#4a1230;border:0;border-radius:99px;padding:10px 30px;cursor:pointer}
+button.sub{background:#fff;border:2px solid var(--pink);margin-top:6px;padding:8px 22px}
 button:focus-visible{outline:3px solid var(--fg)}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap">
 </head>
 <body>
 <div id="app">
- <div class="hud"><span>점수 <b id="score">0</b></span><span id="combo"></span><span>남은 시간 <b id="time">45</b></span></div>
- <div><div class="lab">눈물 침수 게이지 (가득 차면 회로 합선!)</div><div class="bar"><div id="flood"></div></div></div>
+ <div class="hud"><span><span id="sl">점수</span> <b id="score">0</b></span><span id="combo"></span><span><span id="tl">남은 시간</span> <b id="time">30</b></span></div>
+ <div><div class="lab" id="lab">눈물 침수 게이지 (가득 차면 회로 합선!)</div><div class="bar"><div id="flood"></div></div></div>
  <div id="stage"><canvas id="c" aria-label="울고 있는 뚱띠 사이버 햄스터"></canvas></div>
- <div id="over"><h1 id="title">뀨… 눈물이 안 멈춰</h1><p id="msg">눈물을 손가락(마우스)으로 문질러 닦아주세요.<br>왕눈물은 여러 번 문질러야 해요.<br>노란 눈물은 보너스! 대성통곡 타임을 조심하세요.</p><button id="go">닦아주기 시작</button></div>
+ <div id="over"><h1 id="title">뀨… 눈물이 안 멈춰</h1><p id="msg">눈물을 손가락(마우스)으로 문질러 닦아주세요.<br>왕눈물은 여러 번 문질러야 해요.<br>노란 눈물은 보너스! 대성통곡 타임을 조심하세요.</p><button id="go">닦아주기 시작</button> <button id="bathBtn" class="sub">목욕만 하기</button></div>
 </div>
 <script>
 const $=id=>document.getElementById(id),cv=$('c'),x=cv.getContext('2d');
-let W,H,S,state='ready',t=45,score=0,flood=0,combo=0,comboT=0,spawnT=0,tears=[],fx=[],ptr=null,happy=0,petT=0,clock=0,best=0,ac;
+let W,H,S,state='ready',t=30,score=0,flood=0,combo=0,comboT=0,spawnT=0,tears=[],fx=[],ptr=null,happy=0,petT=0,clock=0,best=0,ac;
 try{best=+localStorage.getItem('best')||0}catch(e){}
 function size(){const r=cv.getBoundingClientRect(),d=devicePixelRatio||1;W=r.width;H=r.height;cv.width=W*d;cv.height=H*d;x.setTransform(d,0,0,d,0,0);S=Math.min(W/340,H/400)}
 new ResizeObserver(size).observe(cv);size();
@@ -45,7 +46,7 @@ function line(p,c,w){x.beginPath();x.moveTo(p[0],p[1]);for(let i=2;i<p.length;i+
 function heart(a,b,r,c){x.beginPath();x.moveTo(a,b+r);x.bezierCurveTo(a-r*2,b-r*.3,a-r*.8,b-r*1.5,a,b-r*.45);x.bezierCurveTo(a+r*.8,b-r*1.5,a+r*2,b-r*.3,a,b+r);x.fillStyle=c;x.fill()}
 function star(a,b,r,c){x.beginPath();x.moveTo(a,b-r);for(const[dx,dy]of[[1,0],[0,1],[-1,0],[0,-1]])x.quadraticCurveTo(a,b,a+dx*r,b+dy*r);x.fillStyle=c;x.fill()}
 function pet(){
- const joy=happy>0||state==='win',bob=Math.sin(clock*(joy?9:2.5)),O='#7a4a4a';
+ const calm=state==='bath'||state==='done',joy=happy>0||state==='win'||state==='done',bob=Math.sin(clock*(joy?9:2.5)),O='#7a4a4a';
  x.save();x.translate(0,120);x.scale(1+bob*.012,1-bob*.012);x.translate(0,-120-(joy?Math.abs(bob)*8:0));
  for(const k of[-1,1]){ell(k*88,-84,30,29,'#f4b274',O);ell(k*88,-82,16,16,'#ffb3c7')}
  const body=()=>{x.beginPath();x.moveTo(0,-108);x.bezierCurveTo(78,-110,112,-62,117,-5);x.bezierCurveTo(168,35,166,128,72,134);x.quadraticCurveTo(0,144,-72,134);x.bezierCurveTo(-166,128,-168,35,-117,-5);x.bezierCurveTo(-112,-62,-78,-110,0,-108);x.closePath()};
@@ -65,8 +66,8 @@ function pet(){
    if(clock%3.4<.13)line([ex-21,ey+4,ex,ey+10,ex+21,ey+4],'#3b2030',6);
    else{ell(ex,ey+2,28,31,'#3b2030');ell(ex+lx,ey+11+ly,19,16,'#8a4668');ell(ex-9+lx,ey-9+ly,11,12,'#fff');ell(ex+11+lx,ey+4+ly,5,5,'#fff');star(ex+3+lx,ey+17+ly,7+Math.sin(clock*7+k),'#fff')}
    line([ex+k*22,ey-18,ex+k*33,ey-25],'#3b2030',4);line([ex+k*26,ey-8,ex+k*37,ey-11],'#3b2030',4);
-   ell(ex,ey+27,20,7+Math.sin(clock*5+k)*1.5,'rgba(94,225,255,.8)');ell(ex+1,ey+28,3,3,'#fff');
-   line([ex-k*14,ey-47,ex+k*13,ey-40],'#a8674f',4)}
+   if(!calm){ell(ex,ey+27,20,7+Math.sin(clock*5+k)*1.5,'rgba(94,225,255,.8)');ell(ex+1,ey+28,3,3,'#fff');
+   line([ex-k*14,ey-47,ex+k*13,ey-40],'#a8674f',4)}}
   x.restore();
   ell(k*98,40,28,17,'rgba(255,111,150,.5)');
   for(let j=0;j<3;j++)line([k*(88+j*9),28,k*(83+j*9),39],'#f0789b',2);
@@ -74,6 +75,7 @@ function pet(){
  ell(0,19,9,6,'#ff7fa2');
  x.beginPath();x.moveTo(-23,32);x.quadraticCurveTo(-13,47,0,32);x.quadraticCurveTo(13,47,23,32);x.strokeStyle=O;x.lineWidth=4;x.lineCap='round';
  if(joy){x.stroke();ell(0,52,13,12,'#d9506e',O);ell(0,58,8,5,'#ff9db5')}
+ else if(calm)x.stroke();
  else{x.save();x.translate(0,72+Math.sin(clock*11));x.scale(1,-1);x.translate(0,-32);x.stroke();x.restore()}
  // 리본과 반짝이
  x.save();x.translate(55,-104);x.rotate(.32);for(const k of[-1,1]){x.beginPath();x.moveTo(0,0);x.bezierCurveTo(k*16,-26,k*42,-18,k*34,2);x.bezierCurveTo(k*40,20,k*14,22,0,0);x.fillStyle='#ff6fa8';x.fill();x.strokeStyle='#a52f65';x.lineWidth=3;x.stroke();ell(k*21,-3,5,4,'#ffb7d3')}ell(0,0,10,11,'#ff8fbb','#a52f65');x.restore();
@@ -83,8 +85,8 @@ function pet(){
  for(const k of[-1,1]){ell(k*24,99,19,14,'#ffb3c7',O,k*.35);ell(k*52,133,27,13,'#ffb3c7',O)}
  x.restore()}
 const view=()=>({cx:W/2,cy:H*.49});
-const wailing=()=>{const e=45-t;return(e>=15&&e<21)||e>=33};
-function spawn(){const e=45-t,s=Math.random()<.5?-1:1,big=e>7&&Math.random()<.16;tears.push({x:s*(52+Math.random()*24),y:6,vx:s*(10+Math.random()*(35+e)),vy:30+Math.random()*28+e*1.5,r:big?21:9+Math.random()*6,hp:1,big,gold:!big&&Math.random()<.07,ph:Math.random()*7,sway:e>20?35:0})}
+const wailing=()=>{const e=(30-t)*1.5;return(e>=15&&e<21)||e>=33};
+function spawn(){const e=(30-t)*1.5,s=Math.random()<.5?-1:1,big=e>7&&Math.random()<.16;tears.push({x:s*(52+Math.random()*24),y:6,vx:s*(10+Math.random()*(35+e)),vy:30+Math.random()*28+e*1.5,r:big?21:9+Math.random()*6,hp:1,big,gold:!big&&Math.random()<.07,ph:Math.random()*7,sway:e>20?35:0})}
 function drop(p){x.save();x.translate(p.x,p.y);x.globalAlpha=.4+p.hp*.6;x.beginPath();x.moveTo(0,-p.r*1.7);x.bezierCurveTo(p.r*.5,-p.r,p.r,-p.r*.5,p.r,0);x.arc(0,0,p.r,0,Math.PI);x.bezierCurveTo(-p.r,-p.r*.5,-p.r*.5,-p.r,0,-p.r*1.7);x.fillStyle=p.gold?'#ffd83d':'#62d9ff';x.fill();x.strokeStyle=p.gold?'#c98a00':'#248fc4';x.lineWidth=2;x.stroke();ell(-p.r*.35,-p.r*.1,p.r*.2,p.r*.35,'#fff');x.restore()}
 function wipe(a,b,moved){
  const v=view(),px=(a-v.cx)/S,py=(b-v.cy)/S;
@@ -94,20 +96,72 @@ function wipe(a,b,moved){
   if(p.hp<=0){combo=comboT>0?combo+1:1;comboT=1.5;const g=(p.gold?50:p.big?30:10)+Math.min(combo,20);score+=g;flood=Math.max(0,flood-(p.gold?10:p.big?2:.6));fx.push({x:p.x,y:p.y,s:'♡ +'+g,a:1});beep(p.gold?900:520);if(combo%8===0){happy=1.6;fx.push({x:0,y:-175,s:'뀨♡ 고마워!',a:1.6})}}}}
  tears=tears.filter(p=>p.hp>0);
  if(!hit&&Math.hypot(px,py+80)<55&&petT<=0){petT=1;happy=.5;fx.push({x:0,y:-160,s:'쓰담쓰담',a:1})}}
+const STEPS=[['샤워','샤워기로 진흙을 씻어주세요'],['비누','온몸을 문질러 거품을 내주세요'],['헹굼','거품을 깨끗이 헹궈주세요'],['말리기','드라이기로 뽀송하게 말려주세요'],['간식','해바라기씨를 입까지 끌어다 주세요']];
+const SPOTS=[[-48,-76],[0,-70],[48,-76],[-86,-34],[86,-34],[-30,-45],[30,-45],[-100,12],[100,12],[-120,62],[-74,56],[74,56],[120,62],[-30,66],[30,66],[-108,104],[-62,100],[0,110],[62,100],[108,104],[0,-5]];
+let step=0,mud=[],spots=[],parts=[],seed=null,fed=0,bt=0,emitT=0;
+const SEED=[0,185];
+function startBath(){state='bath';step=0;bt=0;fed=0;seed=null;parts=[];tears=[];fx=[];happy=0;flood=0;combo=comboT=0;
+ mud=SPOTS.filter((_,i)=>i%3!==1).map(([a,b])=>({x:a+Math.random()*12-6,y:b+Math.random()*12-6,r:19+Math.random()*9,hp:1,rot:Math.random()*6}));
+ spots=SPOTS.map(([a,b])=>({x:a,y:b,foam:0,wet:1}));$('over').hidden=true}
+function next(){step++;happy=1.1;fx.push({x:0,y:-170,s:['진흙 안녕! ✨','거품 몽글몽글 🫧','깨끗해졌어 💗','뽀송뽀송 ☁️'][step-1],a:1.8});beep(700,.2);parts=[]}
+function progress(){
+ if(step===0)return 1-mud.reduce((a,m)=>a+Math.max(0,m.hp),0)/mud.length;
+ if(step===1)return spots.reduce((a,p)=>a+p.foam,0)/spots.length;
+ if(step===2)return 1-spots.reduce((a,p)=>a+p.foam,0)/spots.length;
+ if(step===3)return 1-spots.reduce((a,p)=>a+p.wet,0)/spots.length;
+ return fed/3}
+function scrub(px,py,amt){
+ const near=(p,r)=>Math.hypot(p.x-px,p.y-py)<r;
+ if(step===0)for(const m of mud){if(near(m,m.r+22))m.hp=Math.max(0,m.hp-amt)}
+ else if(step<4)for(const p of spots){if(!near(p,40))continue;
+  if(step===1)p.foam=Math.min(1,p.foam+amt*1.4);else if(step===2)p.foam=Math.max(0,p.foam-amt*1.4);else p.wet=Math.max(0,p.wet-amt)}}
+function bathTick(dt){
+ bt+=dt;
+ if(step<4&&ptr){const v=view(),px=(ptr[0]-v.cx)/S,py=(ptr[1]-v.cy)/S;scrub(px,py,dt*1.6);
+  emitT-=dt;if(emitT<=0){emitT=.035;for(let i=0;i<2;i++){const r=Math.random;
+   if(step===0||step===2)parts.push({x:px+r()*30-15,y:py-34,vx:r()*60-30,vy:90+r()*110,g:420,a:.65,r:3+r()*3,c:'#62d9ff'});
+   else if(step===1)parts.push({x:px+r()*50-25,y:py+r()*40-20,vx:r()*40-20,vy:-20-r()*50,g:0,a:.9,r:4+r()*8,c:'bubble'});
+   else parts.push({x:px+r()*40-20,y:py-25,vx:r()*80-40,vy:60+r()*90,g:0,a:.5,r:3+r()*4,c:'#fff'})}}}
+ if(step<4&&progress()>.97){if(step===0)mud.forEach(m=>m.hp=0);spots.forEach(p=>{if(step===1)p.foam=1;if(step===2)p.foam=0;if(step===3)p.wet=0});next()}}
+function seedShape(a,b){ell(a,b,13,21,'#6b5560','#fff',.25);line([a+3,b-14,a-3,b+14],'#fff7ea',3)}
+function bathDraw(dt){
+ for(const m of mud)if(m.hp>0){x.globalAlpha=.35+m.hp*.6;ell(m.x,m.y,m.r,m.r*.7,'#8a5a3b',null,m.rot);ell(m.x+m.r*.6,m.y+m.r*.4,m.r*.4,m.r*.34,'#8a5a3b');ell(m.x-m.r*.25,m.y-m.r*.15,m.r*.35,m.r*.2,'#a8754f',null,m.rot);x.globalAlpha=1}
+ if(step===2||step===3)for(const p of spots)if(p.wet>0&&p.foam<.5){x.globalAlpha=p.wet;drop({x:p.x+6,y:p.y+Math.sin(clock*3+p.x)*3,r:5,hp:1});x.globalAlpha=1}
+ for(const p of spots)if(p.foam>0){const k=p.foam;x.globalAlpha=.93;for(const[dx,dy,r]of[[-12,4,17],[11,6,15],[0,-9,18],[16,-11,9]])ell(p.x+dx,p.y+dy,r*k,r*k,'#fff','#bfe9f7');x.globalAlpha=1}
+ for(const q of parts){q.a-=dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.vy+=q.g*dt;x.globalAlpha=Math.max(0,Math.min(1,q.a*2));
+  if(q.c==='bubble'){ell(q.x,q.y,q.r,q.r,'rgba(255,255,255,.55)','#7fd0ee');ell(q.x-q.r*.3,q.y-q.r*.3,q.r*.22,q.r*.22,'#fff')}else ell(q.x,q.y,q.r*.7,q.r*(q.c==='#fff'?.4:1.3),q.c)}
+ x.globalAlpha=1;parts=parts.filter(q=>q.a>0);
+ if(state==='bath'&&step===4){ell(SEED[0],SEED[1],34,34,'#fff','#ff8fbb');if(!seed)seedShape(...SEED);else seedShape(seed.x,seed.y)}
+ if(state==='done')for(let i=0;i<9;i++)star(Math.cos(i*.7+clock*.4)*165,Math.sin(i*.7+clock*.4)*150,9+Math.sin(clock*6+i)*5,'#ffd83d')}
+function tool(){ // 단계별 도구
+ x.save();x.translate(ptr[0],ptr[1]-38*S);x.textAlign='center';x.textBaseline='middle';
+ if(step===0||step===2){line([14,-8,44,-34,80,-30],'#b9a4ff',10);ell(0,0,27,15,'#fff','#8d7bff',-.2);for(let i=-2;i<3;i++)ell(i*8,5-i*1.6,2.4,2.4,'#62d9ff')}
+ else if(step===1){x.translate(0,38*S);x.rotate(-.25);x.fillStyle='#ffb3d1';x.beginPath();x.roundRect(-28,-18,56,36,16);x.fill();x.strokeStyle='#e8417f';x.lineWidth=3;x.stroke();heart(0,0,8,'#fff')}
+ else{ell(4,-6,28,22,'#ff8fbb','#a52f65');x.fillStyle='#ff8fbb';x.fillRect(-14,2,28,24);x.strokeRect(-14,2,28,24);line([24,-2,44,26],'#a52f65',12);heart(4,-6,8,'#fff')}
+ x.restore()}
+function feed(type,a,b){
+ if(state!=='bath'||step!==4)return;const v=view(),px=(a-v.cx)/S,py=(b-v.cy)/S;
+ if(type==='down'&&Math.hypot(px-SEED[0],py-SEED[1])<55)seed={x:px,y:py};
+ else if(type==='move'&&seed){seed.x=px;seed.y=py;if(Math.hypot(px,py-45)<42){seed=null;fed++;happy=1.2;beep(880,.15);fx.push({x:0,y:-170,s:'냠냠 ♡',a:1.2});
+   if(fed>=3){state='done';$('title').textContent='반짝반짝 뚱띠 완성 ♡';const sec=Math.round(bt);$('msg').innerHTML='씻고 말리고 간식까지 먹었어요.<br>목욕 시간 '+sec+'초';$('go').textContent='눈물닦기 다시 하기';$('bathBtn').textContent='또 목욕하기';$('bathBtn').hidden=false;$('over').hidden=false}}}
+ else if(type==='up')seed=null}
 const pos=e=>{const r=cv.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
-cv.onpointerdown=e=>{cv.setPointerCapture(e.pointerId);ptr=pos(e);wipe(...ptr,0)};
-cv.onpointermove=e=>{if(!ptr)return;const n=pos(e),d=Math.hypot(n[0]-ptr[0],n[1]-ptr[1]),k=Math.ceil(d/12)||1;for(let i=1;i<=k;i++)wipe(ptr[0]+(n[0]-ptr[0])*i/k,ptr[1]+(n[1]-ptr[1])*i/k,d/k);ptr=n};
-cv.onpointerup=cv.onpointercancel=()=>ptr=null;
+cv.onpointerdown=e=>{cv.setPointerCapture(e.pointerId);ptr=pos(e);wipe(...ptr,0);feed('down',...ptr);if(state==='bath'&&step<4){const v=view();scrub((ptr[0]-v.cx)/S,(ptr[1]-v.cy)/S,.08)}};
+cv.onpointermove=e=>{if(!ptr)return;const n=pos(e),d=Math.hypot(n[0]-ptr[0],n[1]-ptr[1]),k=Math.ceil(d/12)||1;for(let i=1;i<=k;i++){const a=ptr[0]+(n[0]-ptr[0])*i/k,b=ptr[1]+(n[1]-ptr[1])*i/k;wipe(a,b,d/k);if(state==='bath'&&step<4){const v=view();scrub((a-v.cx)/S,(b-v.cy)/S,d/k/170)}}ptr=n;feed('move',...n)};
+cv.onpointerup=cv.onpointercancel=()=>{ptr=null;feed('up',0,0)};
 function end(win){state=win?'win':'lose';const rec=score>best;if(rec){best=score;try{localStorage.setItem('best',best)}catch(e){}}
  $('title').textContent=win?'뚝! 이제 안 울어 ♡':'삐빅… 회로 합선!';
  $('msg').innerHTML=(win?'끝까지 닦아줘서 방긋 웃었어요.':'눈물바다가 됐어요. 다시 달래주세요.')+'<br>점수 '+score+' · 최고 '+best+(rec?' (신기록!)':'');
- $('go').textContent='다시 닦아주기';$('over').hidden=false;if(win)tears=[]}
-$('go').onclick=()=>{try{ac=ac||new AudioContext()}catch(e){}state='play';t=45;score=flood=combo=comboT=happy=0;spawnT=0;tears=[];fx=[];$('over').hidden=true};
+ $('go').textContent=win?'목욕시켜주기 →':'다시 닦아주기';$('bathBtn').hidden=true;$('over').hidden=false;if(win)tears=[]}
+const sound=()=>{try{ac=ac||new AudioContext()}catch(e){}};
+$('bathBtn').onclick=()=>{sound();startBath()};
+$('go').onclick=()=>{sound();if(state==='win')return startBath();state='play';t=30;score=flood=combo=comboT=happy=0;spawnT=0;tears=[];fx=[];$('over').hidden=true};
 let last=performance.now();
 function loop(now){
  const dt=Math.min(.05,(now-last)/1000);last=now;clock+=dt;happy-=dt;comboT-=dt;petT-=dt;
  const v=view();
- if(state==='play'){t-=dt;spawnT-=dt;if(spawnT<=0){spawn();spawnT=Math.max(.34,.72-(45-t)*.009)*(wailing()?.65:1)}
+ if(state==='bath')bathTick(dt);
+ if(state==='play'){t-=dt;spawnT-=dt;if(spawnT<=0){spawn();spawnT=Math.max(.34,.72-(30-t)*.0135)*(wailing()?.65:1)}
   for(const p of tears){p.x+=(p.vx+Math.sin(clock*5+p.ph)*p.sway)*dt;p.x=Math.max(-155,Math.min(155,p.x));p.y+=p.vy*dt;p.vy+=22*dt;if(p.y*S+v.cy>H-18){p.hp=0;flood+=p.big?18:p.gold?4:9;combo=0;beep(160)}}
   tears=tears.filter(p=>p.hp>0);
   if(flood>=100){flood=100;end(false)}else if(t<=0){t=0;end(true)}}
@@ -119,13 +173,21 @@ function loop(now){
  x.save();x.translate(v.cx,v.cy);x.scale(S,S);pet();
  if(state==='ready'){drop({x:-68,y:22,r:13,hp:1});drop({x:74,y:48,r:10,hp:1})}
  tears.forEach(drop);
+ if(state==='bath'||state==='done')bathDraw(dt);
  for(const f of fx){f.a-=dt;f.y-=30*dt;x.globalAlpha=Math.max(0,Math.min(1,f.a*2));x.font="20px 'Gowun Dodum',sans-serif";x.textAlign='center';x.lineWidth=5;x.strokeStyle='#fff';x.strokeText(f.s,f.x,f.y);x.fillStyle='#d92f72';x.fillText(f.s,f.x,f.y)}x.globalAlpha=1;fx=fx.filter(f=>f.a>0);
  if(state==='play'&&wailing()){x.textAlign='center';x.font="24px 'Gowun Dodum',sans-serif";x.lineWidth=6;x.strokeStyle='#fff';x.strokeText('💦 대성통곡 타임! 💦',0,-180);x.fillStyle='#d92f72';x.fillText('💦 대성통곡 타임! 💦',0,-180)}
  x.restore();
  const wl=flood*H*.0018+6;x.beginPath();x.moveTo(0,H);for(let i=0;i<=W+8;i+=8)x.lineTo(i,H-wl+Math.sin(i/28+clock*3)*4);x.lineTo(W,H);x.fillStyle='rgba(110,205,255,.5)';x.fill();
- if(ptr){x.save();x.translate(...ptr);x.rotate(-.2);x.fillStyle='#fff';x.beginPath();x.roundRect(-24,-24,48,48,14);x.fill();x.strokeStyle='#ff9ec4';x.lineWidth=3;x.stroke();x.fillStyle='#ff7fa2';x.font='24px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('♥',0,1);x.restore()}
+ if(ptr&&state==='bath'){if(step<4)tool()}
+ else if(ptr){x.save();x.translate(...ptr);x.rotate(-.2);x.fillStyle='#fff';x.beginPath();x.roundRect(-24,-24,48,48,14);x.fill();x.strokeStyle='#ff9ec4';x.lineWidth=3;x.stroke();x.fillStyle='#ff7fa2';x.font='24px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('♥',0,1);x.restore()}
  $('score').textContent=score;$('time').textContent=Math.ceil(t);$('flood').style.width=flood+'%';$('combo').textContent=comboT>0&&combo>1?combo+' 콤보':'';
+ hud();
  requestAnimationFrame(loop)}
+function hud(){
+ const b=state==='bath'||state==='done';$('sl').textContent=b?'단계':'점수';$('tl').textContent=b?'걸린 시간':'남은 시간';
+ $('lab').textContent=!b?'눈물 침수 게이지 (가득 차면 회로 합선!)':state==='done'?'목욕 끝! 💗':STEPS[step][1];
+ if(b){const p=state==='done'?1:Math.min(1,progress());$('score').textContent=state==='done'?'완료':(step+1)+'/5 '+STEPS[step][0];$('time').textContent=Math.round(bt)+'초';$('flood').style.width=p*100+'%';$('combo').textContent=''}
+ $('flood').style.background=b?'var(--pink)':'var(--cyan)'}
 requestAnimationFrame(loop);
 </script>
 </body>
